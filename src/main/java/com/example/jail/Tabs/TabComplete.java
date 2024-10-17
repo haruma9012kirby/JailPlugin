@@ -43,14 +43,28 @@ public class TabComplete implements TabCompleter {
             case "jailinfo":
                 return completeJailInfoCommand(args);
             default:
-                return Collections.emptyList();
+                return null;
         }
     }
 
-   private List<String> completeJailCommand(String[] args) {
+    private List<String> getAllPlayerNames() {
+        List<String> onlinePlayers = getOnlinePlayerNames();
+        List<String> allPlayers = new ArrayList<>(onlinePlayers);
+
+        Arrays.stream(Bukkit.getOfflinePlayers())
+                .map(offlinePlayer -> offlinePlayer.getName())
+                .filter(name -> name != null && !onlinePlayers.contains(name))
+                .forEach(allPlayers::add);
+
+        return allPlayers;
+    }
+
+    private List<String> completeJailCommand(String[] args) {
         switch (args.length) {
             case 1:
-                return filterByPrefix(getOnlinePlayerNames(), args[0]); // プレイヤー名を補完
+                // プレイヤー名の順序を保持して取得し、順序を維持したまま返す
+                List<String> allPlayers = getAllPlayerNames(); // 全プレイヤー名を取得
+                return filterByPrefix(allPlayers, args[0]); // プレイヤー名を補完
             case 2:
                 return filterByPrefix(new ArrayList<>(this.jails.keySet()), args[1]); // 監獄名を補完
             case 3:
@@ -58,40 +72,56 @@ public class TabComplete implements TabCompleter {
             case 4:
                 return filterByPrefix(Arrays.asList("true", "false"), args[3]); // アドベンチャーモードの真偽値を補完
             default:
-                return Collections.emptyList();
+                return null;
         }
     }
-   private List<String> completeJailTpCommand(String[] args) {
-        switch (args.length) {
-            case 1:
-                return filterByPrefix(getOnlinePlayerNames(), args[0]); // プレイヤー名を補完
-            default:
-                return Collections.emptyList();
-        }
-    }
-
-   private List<String> completeJailTpRpCommand(String[] args) {
-        switch (args.length) {
-            case 1:
-                return filterByPrefix(getOnlinePlayerNames(), args[0]); // プレイヤー名を補完
-            default:
-                return Collections.emptyList();
-        }
-    }
-
-   private List<String> completeJailInfoCommand(String[] args) {
-        switch (args.length) {
-            case 1:
-                return filterByPrefix(getOnlinePlayerNames(), args[0]); // プレイヤー名を補完
-            default:
-                return Collections.emptyList();
-        }
-    } 
     
+    private List<String> getOnlinePlayerNames() {
+        return Bukkit.getOnlinePlayers().stream()
+                .map(Player::getName)
+                .collect(Collectors.toList()); // オンラインプレイヤー名を取得
+    }
+    
+    private List<String> filterByPrefix(List<String> options, String prefix) {
+        if (prefix == null || prefix.isEmpty()) {
+            return options;
+        }
+        return options.stream()
+                .filter(option -> option.toLowerCase().startsWith(prefix.toLowerCase()))
+                .collect(Collectors.toList());
+    }
+
+    private List<String> completeJailTpCommand(String[] args) {
+        switch (args.length) {
+            case 1:
+                return filterByPrefix(getAllPlayerNames(), args[0]); // プレイヤー名を補完
+            default:
+                return Collections.emptyList();
+        }
+    }
+
+    private List<String> completeJailTpRpCommand(String[] args) {
+        switch (args.length) {
+            case 1:
+                return filterByPrefix(getAllPlayerNames(), args[0]); // プレイヤー名を補完
+            default:
+                return Collections.emptyList();
+        }
+    }
+
+    private List<String> completeJailInfoCommand(String[] args) {
+        switch (args.length) {
+            case 1:
+                return filterByPrefix(getAllPlayerNames(), args[0]); // プレイヤー名を補完
+            default:
+                return Collections.emptyList();
+        }
+    }
+
     private List<String> completeUnjailCommand(String[] args) {
         switch (args.length) {
             case 1:
-                return filterByPrefix(getOnlinePlayerNames(), args[0]); // プレイヤー名を補完
+                return filterByPrefix(getAllPlayerNames(), args[0]); // プレイヤー名を補完
             default:
                 return Collections.emptyList();
         }
@@ -106,26 +136,10 @@ public class TabComplete implements TabCompleter {
         }
     }
 
-
     private List<String> completeJailNameCommand(String[] args) {
         if (args.length == 1) {
-            return filterByPrefix(getOnlinePlayerNames(), args[0]); // プレイヤー名を補完
+            return filterByPrefix(getAllPlayerNames(), args[0]); // プレイヤー名を補完
         }
         return Collections.emptyList();
-    }
-
-    private List<String> filterByPrefix(List<String> options, String prefix) {
-        if (prefix == null || prefix.isEmpty()) {
-            return options;
-        }
-        return options.stream()
-                .filter(option -> option.toLowerCase().startsWith(prefix.toLowerCase()))
-                .collect(Collectors.toList());
-    }
-
-    private List<String> getOnlinePlayerNames() {
-        return Bukkit.getOnlinePlayers().stream()
-                .map(Player::getName)
-                .collect(Collectors.toList()); // オンラインプレイヤー名を取得
     }
 }

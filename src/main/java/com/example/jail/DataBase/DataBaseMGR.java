@@ -55,6 +55,7 @@ public class DataBaseMGR {
          } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "MySQLデータベースへの接続に失敗しました: {0}", e.getMessage());
             LOGGER.log(Level.SEVERE, "ホスト: {0}, ポート: {1}, データベース: {2}, ユーザー: {3}", new Object[]{mysqlHost, mysqlPort, mysqlDatabase, mysqlUsername});
+            LOGGER.log(Level.SEVERE, "エラー詳細: ", e);
             LOGGER.info("SQLiteにフォールバックします。");
             initializeSQLite();
          }
@@ -66,11 +67,12 @@ public class DataBaseMGR {
 
    private void initializeSQLite() {
       try {
-         String url = "jdbc:sqlite:plugins/JailPlugin/database.db";
+         String url = "jdbc:sqlite:plugins/JailPlugin/jails.db";
          connection = DriverManager.getConnection(url);
          LOGGER.info("SQLiteデータベースに接続しました。");
       } catch (SQLException e) {
          LOGGER.log(Level.SEVERE, "SQLiteデータベースへの接続に失敗しました: {0}", e.getMessage());
+         LOGGER.log(Level.SEVERE, "エラー詳細: ", e);
          connection = null;
       }
    }
@@ -106,32 +108,31 @@ public class DataBaseMGR {
          LOGGER.log(Level.SEVERE, "データベース接続が確立されていません。");
          return;
       }
-      try {
-         String query = "SELECT name, location, capacity, unjail_location FROM jails";
-         try (Statement statement = connection.createStatement();
-              ResultSet rs = statement.executeQuery(query)) {
+      String query = "SELECT name, location, capacity, unjail_location FROM jails";
+      try (Statement statement = connection.createStatement();
+           ResultSet rs = statement.executeQuery(query)) {
 
-            while (rs.next()) {
-               String name = rs.getString("name");
-               Location location = stringToLocation(rs.getString("location"));
-               int capacity = rs.getInt("capacity");
-               String unjailLocationStr = rs.getString("unjail_location");
-               Location unjailLocation = unjailLocationStr != null ? stringToLocation(unjailLocationStr) : null;
-               jails.put(name, new Jail(name, location, capacity, unjailLocation));
-            }
-            // プラグインのjailsフィールドにロードしたデータを設定
-            JailPlugin plugin = JavaPlugin.getPlugin(JailPlugin.class);
-            plugin.jails = this.jails;
-         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "刑務所のロード中にSQLエラーが発生しました: {0}", e.getMessage());
-            if (e.getMessage().contains("no such table")) {
-               LOGGER.info("jailsテーブルが存在しません。テーブルを作成します。");
-               createTables();  // テーブルを作成し直す
-               loadJailsFromDatabase();  // 再度ロードを試みる
-            }
+         while (rs.next()) {
+            String name = rs.getString("name");
+            Location location = stringToLocation(rs.getString("location"));
+            int capacity = rs.getInt("capacity");
+            String unjailLocationStr = rs.getString("unjail_location");
+            Location unjailLocation = unjailLocationStr != null ? stringToLocation(unjailLocationStr) : null;
+            jails.put(name, new Jail(name, location, capacity, unjailLocation));
+         }
+         JailPlugin plugin = JavaPlugin.getPlugin(JailPlugin.class);
+         plugin.jails = this.jails;
+      } catch (SQLException e) {
+         LOGGER.log(Level.SEVERE, "刑務所のロード中にSQLエラーが発生しました: {0}", e.getMessage());
+         LOGGER.log(Level.SEVERE, "エラー詳細: ", e);
+         if (e.getMessage().contains("no such table")) {
+            LOGGER.info("jailsテーブルが存在しません。テーブルを作成します。");
+            createTables();
+            loadJailsFromDatabase();
          }
       } catch (Exception e) {
          LOGGER.log(Level.SEVERE, "予期しないエラーが発生しました: {0}", e.getMessage());
+         LOGGER.log(Level.SEVERE, "エラー詳細: ", e);
       }
    }
 
@@ -145,6 +146,7 @@ public class DataBaseMGR {
          ps.executeUpdate();
       } catch (SQLException e) {
          LOGGER.log(Level.SEVERE, "SQLエラーが発生しました: {0}", e.getMessage());
+         LOGGER.log(Level.SEVERE, "エラー詳細: ", e);
       }
    }
 
@@ -156,6 +158,7 @@ public class DataBaseMGR {
          ps.executeUpdate();
       } catch (SQLException e) {
          LOGGER.log(Level.SEVERE, "SQLエラーが発生しました: {0}", e.getMessage());
+         LOGGER.log(Level.SEVERE, "エラー詳細: ", e);
       }
    }
 
@@ -173,6 +176,7 @@ public class DataBaseMGR {
          ps.executeUpdate();
       } catch (SQLException e) {
          LOGGER.log(Level.SEVERE, "SQLエラーが発生しました: {0}", e.getMessage());
+         LOGGER.log(Level.SEVERE, "エラー詳細: ", e);
       }
    }
 
@@ -193,6 +197,7 @@ public class DataBaseMGR {
          ps.executeUpdate();
       } catch (SQLException e) {
          LOGGER.log(Level.SEVERE, "SQLエラーが発生しました: {0}", e.getMessage());
+         LOGGER.log(Level.SEVERE, "エラー詳細: ", e);
       }
    }
 
@@ -209,6 +214,7 @@ public class DataBaseMGR {
          }
       } catch (SQLException e) {
          LOGGER.log(Level.SEVERE, "SQLエラーが発生しました: {0}", e.getMessage());
+         LOGGER.log(Level.SEVERE, "エラー詳細: ", e);
       }
 
       return paroleUntil;
@@ -221,6 +227,7 @@ public class DataBaseMGR {
          ps.executeUpdate();
       } catch (SQLException e) {
          LOGGER.log(Level.SEVERE, "SQLエラーが発生しました: {0}", e.getMessage());
+         LOGGER.log(Level.SEVERE, "エラー詳細: ", e);
       }
    }
 
@@ -231,6 +238,7 @@ public class DataBaseMGR {
          ps.executeUpdate();
       } catch (SQLException e) {
          LOGGER.log(Level.SEVERE, "SQLエラーが発生しました: {0}", e.getMessage());
+         LOGGER.log(Level.SEVERE, "エラー詳細: ", e);
       }
    }
 
@@ -251,12 +259,10 @@ public class DataBaseMGR {
             String playerName = rs.getString("player");
             String jailName = rs.getString("jail_name");
             long paroleUntil = rs.getLong("parole_until");
-            // 仮釈放中のプレイヤーを適切に処理
             Jail jail = jails.get(jailName);
             if (jail != null) {
                jail.addPlayer(playerName);
                if (paroleUntil > System.currentTimeMillis() / 1000L) {
-                  // 仮釈放中の処理
                   Map<String, Long> playerParoleMap = jailedPlayers.getOrDefault(jail, new HashMap<>());
                   playerParoleMap.put(playerName, paroleUntil);
                   jailedPlayers.put(jail, playerParoleMap);
@@ -265,6 +271,7 @@ public class DataBaseMGR {
          }
       } catch (SQLException e) {
          LOGGER.log(Level.SEVERE, "プレイヤーのロード中にSQLエラーが発生しました: {0}", e.getMessage());
+         LOGGER.log(Level.SEVERE, "エラー詳細: ", e);
       }
    }
 
@@ -279,6 +286,26 @@ public class DataBaseMGR {
          LOGGER.info("必要なテーブルを作成しました。");
       } catch (SQLException e) {
          LOGGER.log(Level.SEVERE, "テーブルの作成中にエラーが発生しました: {0}", e.getMessage());
+         LOGGER.log(Level.SEVERE, "エラー詳細: ", e);
       }
    }
+   public String getJailNameFromDatabase(String playerName) {
+      String jailName = null;
+      String query = "SELECT jail_name FROM jailed_players WHERE player = ?";
+      
+      try (PreparedStatement ps = this.connection.prepareStatement(query)) {
+         ps.setString(1, playerName);
+         try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+               jailName = rs.getString("jail_name");
+            }
+         }
+      } catch (SQLException e) {
+         LOGGER.log(Level.SEVERE, "SQLエラーが発生しました: {0}", e.getMessage());
+         LOGGER.log(Level.SEVERE, "エラー詳細: ", e);
+      }
+      
+      return jailName;
+   }
+
 }
