@@ -1,5 +1,5 @@
 name: JailPlugin
-version: 1.0-alpha
+version: 1.0-RELEASE
 main: com.example.jail.JailPlugin
 author: Soryu-haruma(Asl,haruma9012kirby)
 api-version: 1.16
