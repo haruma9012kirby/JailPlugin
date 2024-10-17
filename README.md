@@ -41,4 +41,4 @@ Soryu-haruma (Als, haruma9012kirby)
 
 問題や提案がある場合は、GitHub の Issue トラッカーを使用してください。
 
-Copyright 2024 Soryu-haruma (Als, haruma9012kirby)
+`Copyright 2024 Soryu-haruma (Als, haruma9012kirby)`
