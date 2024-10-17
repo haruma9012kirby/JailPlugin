@@ -38,6 +38,8 @@ public class SetUnJailCommand {
         Location location = player.getLocation();
         jail.setUnjailLocation(location);
 
+        player.sendMessage(ChatColor.GREEN + "あなたは釈放されました。"); 
+
         if (this.plugin.dataBaseMGR != null) {
             this.plugin.dataBaseMGR.updateUnjailLocationInDatabase(jailName, location); // 釈放地点をデータベースに更新
         } else {
@@ -46,6 +48,7 @@ public class SetUnJailCommand {
         }
 
         player.sendMessage(ChatColor.GREEN + jailName + " の釈放地点が設定されました。");
+        
         return true;
     }
 }

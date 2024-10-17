@@ -1,0 +1,8 @@
+# MySQL設定
+mysql:
+  enabled: false # trueに設定するとMySQLを使用します
+  host: localhost
+  port: 3306
+  database: jailplugin
+  username: root
+  password: password

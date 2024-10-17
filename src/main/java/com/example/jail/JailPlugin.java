@@ -24,7 +24,6 @@ import com.example.jail.EventListeners.PlayerJoinListener;
 import com.example.jail.Formats.FormatDuration;
 import com.example.jail.Formats.FormatLocation;
 import com.example.jail.Tabs.TabComplete;
-import com.example.jail.commands.JailCancelParole;
 import com.example.jail.commands.JailCommand;
 import com.example.jail.commands.JailInfoCommand;
 import com.example.jail.commands.JailListCommand;
@@ -34,8 +33,6 @@ import com.example.jail.commands.RemoveJailCommand;
 import com.example.jail.commands.SetJailCommand;
 import com.example.jail.commands.SetUnJailCommand;
 import com.example.jail.commands.UnJailCommand;
-
-import net.md_5.bungee.api.ChatColor;
 
 // プラグインのメインクラス
 public class JailPlugin extends JavaPlugin implements Listener {
@@ -51,7 +48,6 @@ public class JailPlugin extends JavaPlugin implements Listener {
    public DataBaseMGR dataBaseMGR;
    public PlayerJoinListener playerJoinListener;
    public JailInfoCommand jailInfoCommand;
-   public JailCancelParole jailCancelParole;
    public RemoveJailCommand removeJailCommand;
    public JailTpCommand jailTpCommand;
    public JailTpRpCommand jailTpRpCommand;
@@ -64,8 +60,24 @@ public class JailPlugin extends JavaPlugin implements Listener {
    // プラグイン有効化時の処理
    @Override
    public void onEnable() {
-      dataBaseMGR = new DataBaseMGR();
-      dataBaseMGR.initializeDatabase();
+      saveDefaultConfig();
+
+      // プラグインのデータフォルダを作成
+      if (!getDataFolder().exists()) {
+         getDataFolder().mkdirs();
+      }
+
+      // MySQL設定を読み込む
+      boolean mysqlEnabled = getConfig().getBoolean("mysql.enabled");
+      String mysqlHost = getConfig().getString("mysql.host");
+      int mysqlPort = getConfig().getInt("mysql.port");
+      String mysqlDatabase = getConfig().getString("mysql.database");
+      String mysqlUsername = getConfig().getString("mysql.username");
+      String mysqlPassword = getConfig().getString("mysql.password");
+      
+      dataBaseMGR = new DataBaseMGR(mysqlEnabled, mysqlHost, mysqlPort, mysqlDatabase, mysqlUsername, mysqlPassword);
+      dataBaseMGR.initialize();
+      dataBaseMGR.createTables();
 
       // データベースから情報をロード
       dataBaseMGR.loadJailsFromDatabase();
@@ -105,7 +117,6 @@ public class JailPlugin extends JavaPlugin implements Listener {
       this.playerStatusChecker = new PlayerStatusChecker(this, this.unJailCommand);
       this.getJailNameByPlayer = new GetJailNameByPlayer(this.jails);
       this.jailInfoCommand = new JailInfoCommand(this);
-      this.jailCancelParole = new JailCancelParole(this);
       this.removeJailCommand = new RemoveJailCommand(this);
       this.jailListCommand = new JailListCommand(this);
       this.jailTpCommand = new JailTpCommand(this);
@@ -178,12 +189,7 @@ public class JailPlugin extends JavaPlugin implements Listener {
             case "jaillist":
                return jailListCommand.handleJailList(player, args);
             case "unjail":
-               if (args.length < 1) {
-                  player.sendMessage(ChatColor.RED + "使用法: /unjail <プレイヤー名>");
-                  return false;
-               }
-               unJailCommand.unjailPlayer(player, args);
-               return true;
+               return unJailCommand.unjailPlayer(player, args);
             case "jailinfo":
                jailInfoCommand.handleJailInfo(player, args.length > 0 ? args[0] : null);
                return true;
@@ -193,8 +199,6 @@ public class JailPlugin extends JavaPlugin implements Listener {
                return jailTpRpCommand.handleJailTpRp(player, args.length > 0 ? args[0] : null);
             case "removejail":
                return removeJailCommand.handleRemoveJail(player, args);
-            case "jailcancelparole":
-               return jailCancelParole.handleJailCancelParole(player, args);
             default:
                return false;
          }

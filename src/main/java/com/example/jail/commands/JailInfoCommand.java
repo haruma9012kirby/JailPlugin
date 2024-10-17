@@ -7,8 +7,6 @@ import com.example.jail.Jail;
 import com.example.jail.JailPlugin;
 
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.TextComponent;
 
 // 刑務所情報の表示
 public class JailInfoCommand {
@@ -31,20 +29,7 @@ public class JailInfoCommand {
             StringBuilder jailedPlayersInfo = new StringBuilder(ChatColor.BLUE + "収容しているプレイヤー: ");
 
             for (String jailedPlayer : jail.getJailedPlayers()) {
-                long paroleUntil = this.plugin.dataBaseMGR.getParoleUntilFromDatabase(jailedPlayer);
-                TextComponent playerNameComponent = new TextComponent(jailedPlayer);
-                
-                if (paroleUntil > System.currentTimeMillis() / 1000L) {
-                    // 仮釈放中のプレイヤーに対してのみ表示
-                    playerNameComponent.addExtra(" " + ChatColor.RED + "(仮釈放中)");
-                    TextComponent cancelButton = new TextComponent(" [取りやめ]");
-                    cancelButton.setColor(ChatColor.RED);
-                    cancelButton.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/jailcancelparole " + jailedPlayer));
-                    playerNameComponent.addExtra(cancelButton);
-                }
-                
-                // すべてのプレイヤーを追加
-                jailedPlayersInfo.append(playerNameComponent.toLegacyText()).append(", ");
+                jailedPlayersInfo.append(jailedPlayer).append(", ");
             }
 
             if (jailedPlayersInfo.length() > 2) {

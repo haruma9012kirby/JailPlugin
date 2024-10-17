@@ -92,8 +92,6 @@ public class TabComplete implements TabCompleter {
         switch (args.length) {
             case 1:
                 return filterByPrefix(getOnlinePlayerNames(), args[0]); // プレイヤー名を補完
-            case 2:
-                return filterByPrefix(Arrays.asList("infiniti", "1w", "1d", "1h", "1m", "1s"), args[1]); // 期間を補完
             default:
                 return Collections.emptyList();
         }
@@ -102,7 +100,7 @@ public class TabComplete implements TabCompleter {
     private List<String> completeSetUnjailCommand(String[] args) {
         switch (args.length) {
             case 1:
-                return filterByPrefix(getOnlinePlayerNames(), args[0]); // プレイヤー名を補完
+                return filterByPrefix(new ArrayList<>(this.jails.keySet()), args[0]); // 監獄名を補完
             default:
                 return Collections.emptyList();
         }

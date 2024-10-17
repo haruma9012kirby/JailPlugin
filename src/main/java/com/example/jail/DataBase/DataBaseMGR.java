@@ -1,6 +1,5 @@
 package com.example.jail.DataBase;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -21,11 +20,23 @@ import com.example.jail.JailPlugin;
 
 public class DataBaseMGR {
    private static final Logger LOGGER = Logger.getLogger(DataBaseMGR.class.getName());
+   private final boolean mysqlEnabled;
+   private final String mysqlHost;
+   private final int mysqlPort;
+   private final String mysqlDatabase;
+   private final String mysqlUsername;
+   private final String mysqlPassword;
    private Connection connection;
    private final Map<String, Jail> jails;
    private final Map<Jail, Map<String, Long>> jailedPlayers;
 
-   public DataBaseMGR() {
+   public DataBaseMGR(boolean mysqlEnabled, String mysqlHost, int mysqlPort, String mysqlDatabase, String mysqlUsername, String mysqlPassword) {
+      this.mysqlEnabled = mysqlEnabled;
+      this.mysqlHost = mysqlHost;
+      this.mysqlPort = mysqlPort;
+      this.mysqlDatabase = mysqlDatabase;
+      this.mysqlUsername = mysqlUsername;
+      this.mysqlPassword = mysqlPassword;
       this.jails = new HashMap<>();
       this.jailedPlayers = new HashMap<>();
    }
@@ -36,21 +47,31 @@ public class DataBaseMGR {
    }
 
    public void initializeDatabase() {
-      JailPlugin plugin = JavaPlugin.getPlugin(JailPlugin.class);
-      File dataFolder = plugin.getDataFolder();
-      File dbFile = new File(dataFolder, "jails.db");
-      
-      try {
-         if (!dataFolder.exists()) {
-            dataFolder.mkdirs();
+      if (mysqlEnabled) {
+         try {
+            String url = "jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase;
+            connection = DriverManager.getConnection(url, mysqlUsername, mysqlPassword);
+            LOGGER.info("MySQLデータベースに接続しました。");
+         } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "MySQLデータベースへの接続に失敗しました: {0}", e.getMessage());
+            LOGGER.log(Level.SEVERE, "ホスト: {0}, ポート: {1}, データベース: {2}, ユーザー: {3}", new Object[]{mysqlHost, mysqlPort, mysqlDatabase, mysqlUsername});
+            LOGGER.info("SQLiteにフォールバックします。");
+            initializeSQLite();
          }
-         
-         connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
-         
-         createJailsTable();
-         createJailedPlayersTable();
+      } else {
+         LOGGER.info("MySQLは無効化されています。SQLiteを使用します。");
+         initializeSQLite();
+      }
+   }
+
+   private void initializeSQLite() {
+      try {
+         String url = "jdbc:sqlite:plugins/JailPlugin/database.db";
+         connection = DriverManager.getConnection(url);
+         LOGGER.info("SQLiteデータベースに接続しました。");
       } catch (SQLException e) {
-         LOGGER.log(Level.SEVERE, "データベースの初期化中にエラーが発生しました: {0}", e.getMessage());
+         LOGGER.log(Level.SEVERE, "SQLiteデータベースへの接続に失敗しました: {0}", e.getMessage());
+         connection = null;
       }
    }
 
@@ -81,23 +102,36 @@ public class DataBaseMGR {
    }
 
    public void loadJailsFromDatabase() {
-      String query = "SELECT name, location, capacity, unjail_location FROM jails";
-      try (Statement statement = connection.createStatement();
-           ResultSet rs = statement.executeQuery(query)) {
+      if (connection == null) {
+         LOGGER.log(Level.SEVERE, "データベース接続が確立されていません。");
+         return;
+      }
+      try {
+         String query = "SELECT name, location, capacity, unjail_location FROM jails";
+         try (Statement statement = connection.createStatement();
+              ResultSet rs = statement.executeQuery(query)) {
 
-         while (rs.next()) {
-            String name = rs.getString("name");
-            Location location = stringToLocation(rs.getString("location"));
-            int capacity = rs.getInt("capacity");
-            String unjailLocationStr = rs.getString("unjail_location");
-            Location unjailLocation = unjailLocationStr != null ? stringToLocation(unjailLocationStr) : null;
-            jails.put(name, new Jail(name, location, capacity, unjailLocation));
+            while (rs.next()) {
+               String name = rs.getString("name");
+               Location location = stringToLocation(rs.getString("location"));
+               int capacity = rs.getInt("capacity");
+               String unjailLocationStr = rs.getString("unjail_location");
+               Location unjailLocation = unjailLocationStr != null ? stringToLocation(unjailLocationStr) : null;
+               jails.put(name, new Jail(name, location, capacity, unjailLocation));
+            }
+            // プラグインのjailsフィールドにロードしたデータを設定
+            JailPlugin plugin = JavaPlugin.getPlugin(JailPlugin.class);
+            plugin.jails = this.jails;
+         } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "刑務所のロード中にSQLエラーが発生しました: {0}", e.getMessage());
+            if (e.getMessage().contains("no such table")) {
+               LOGGER.info("jailsテーブルが存在しません。テーブルを作成します。");
+               createTables();  // テーブルを作成し直す
+               loadJailsFromDatabase();  // 再度ロードを試みる
+            }
          }
-         // プラグインのjailsフィールドにロードしたデータを設定
-         JailPlugin plugin = JavaPlugin.getPlugin(JailPlugin.class);
-         plugin.jails = this.jails;
-      } catch (SQLException e) {
-         LOGGER.log(Level.SEVERE, "刑務所のロード中にSQLエラーが発生しました: {0}", e.getMessage());
+      } catch (Exception e) {
+         LOGGER.log(Level.SEVERE, "予期しないエラーが発生しました: {0}", e.getMessage());
       }
    }
 
@@ -205,6 +239,10 @@ public class DataBaseMGR {
    }
 
    public void loadJailedPlayersFromDatabase() {
+      if (connection == null) {
+         LOGGER.log(Level.SEVERE, "データベース接続が確立されていません。");
+         return;
+      }
       String query = "SELECT player, jail_name, parole_until FROM jailed_players";
       try (Statement statement = connection.createStatement();
            ResultSet rs = statement.executeQuery(query)) {
@@ -227,6 +265,20 @@ public class DataBaseMGR {
          }
       } catch (SQLException e) {
          LOGGER.log(Level.SEVERE, "プレイヤーのロード中にSQLエラーが発生しました: {0}", e.getMessage());
+      }
+   }
+
+   public void createTables() {
+      if (connection == null) {
+         LOGGER.log(Level.SEVERE, "データベース接続が確立されていません。テーブルを作成できません。");
+         return;
+      }
+      try {
+         createJailsTable();
+         createJailedPlayersTable();
+         LOGGER.info("必要なテーブルを作成しました。");
+      } catch (SQLException e) {
+         LOGGER.log(Level.SEVERE, "テーブルの作成中にエラーが発生しました: {0}", e.getMessage());
       }
    }
 }

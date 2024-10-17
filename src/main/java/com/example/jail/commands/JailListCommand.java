@@ -66,14 +66,7 @@ public class JailListCommand {
                 StringBuilder jailedPlayersInfo = new StringBuilder("収容しているプレイヤー: ");
 
                 for (String jailedPlayer : jail.getJailedPlayers()) {
-                    long paroleUntil = this.plugin.dataBaseMGR.getParoleUntilFromDatabase(jailedPlayer);
-                    TextComponent playerNameComponent = new TextComponent(jailedPlayer);
-                    
-                    if (paroleUntil > System.currentTimeMillis() / 1000L) {
-                        playerNameComponent.addExtra(" " + net.md_5.bungee.api.ChatColor.RED + "(仮釈放中)");
-                    }
-                    
-                    jailedPlayersInfo.append(playerNameComponent.toLegacyText()).append(", ");
+                    jailedPlayersInfo.append(jailedPlayer).append(", ");
                 }
 
                 if (jailedPlayersInfo.length() > 0) {

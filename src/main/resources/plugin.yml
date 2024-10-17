@@ -4,6 +4,7 @@ main: com.example.jail.JailPlugin
 author: Soryu-haruma(Asl,haruma9012kirby)
 api-version: 1.16
 api: 1.21.1-R0.1-SNAPSHOT
+url: https://github.com/haruma9012kirby/JailPlugin
 commands:
   setjail:
     description: Sets a location as a jail.
@@ -32,9 +33,6 @@ commands:
   jailinfo:
     description: Show information about a specific jail.
     tab-complete: com.example.jail.Tabs.TabComplete
-  jailcancelparole:
-    description: Cancel parole for a player.
-    tab-complete: com.example.jail.Tabs.TabComplete
 permissions:
   jailplugin.command.setjail:
     description: Allows the user to set a jail location.
@@ -62,8 +60,5 @@ permissions:
     default: op
   jailplugin.command.jailinfo:
     description: Allows the user to show information about a specific jail.
-    default: op
-  jailplugin.command.jailcancelparole:
-    description: Allows the user to cancel parole for a player.
     default: op
 # Author Soryu-haruma(Asl,haruma9012kirby)
