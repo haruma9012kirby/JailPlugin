@@ -1,0 +1,69 @@
+name: JailPlugin
+version: 1.0-alpha
+main: com.example.jail.JailPlugin
+author: Soryu-haruma(Asl,haruma9012kirby)
+api-version: 1.16
+api: 1.21.1-R0.1-SNAPSHOT
+commands:
+  setjail:
+    description: Sets a location as a jail.
+    tab-complete: com.example.jail.Tabs.TabComplete
+  jail:
+    description: Jail a player.
+    tab-complete: com.example.jail.Tabs.TabComplete
+  setunjail:
+    description: Set an unjail location.
+    tab-complete: com.example.jail.Tabs.TabComplete
+  jaillist:
+    description: List all jails and jailed players.
+    tab-complete: com.example.jail.Tabs.TabComplete
+  unjail:
+    description: Unjail a player.
+    tab-complete: com.example.jail.Tabs.TabComplete
+  jailtp:
+    description: Teleport to a jail.
+    tab-complete: com.example.jail.Tabs.TabComplete
+  jailtp-rp:
+    description: Teleport to a jail's release point.
+    tab-complete: com.example.jail.Tabs.TabComplete
+  removejail:
+    description: Remove a jail.
+    tab-complete: com.example.jail.Tabs.TabComplete
+  jailinfo:
+    description: Show information about a specific jail.
+    tab-complete: com.example.jail.Tabs.TabComplete
+  jailcancelparole:
+    description: Cancel parole for a player.
+    tab-complete: com.example.jail.Tabs.TabComplete
+permissions:
+  jailplugin.command.setjail:
+    description: Allows the user to set a jail location.
+    default: op
+  jailplugin.command.jail:
+    description: Allows the user to jail a player.
+    default: op
+  jailplugin.command.setunjail:
+    description: Allows the user to set an unjail location.
+    default: op
+  jailplugin.command.jaillist:
+    description: Allows the user to list all jails and jailed players.
+    default: op
+  jailplugin.command.unjail:
+    description: Allows the user to unjail a player.
+    default: op
+  jailplugin.command.jailtp:
+    description: Allows the user to teleport to a jail.
+    default: op
+  jailplugin.command.jailtp-rp:
+    description: Allows the user to teleport to a jail's release point.
+    default: op
+  jailplugin.command.removejail:
+    description: Allows the user to remove a jail.
+    default: op
+  jailplugin.command.jailinfo:
+    description: Allows the user to show information about a specific jail.
+    default: op
+  jailplugin.command.jailcancelparole:
+    description: Allows the user to cancel parole for a player.
+    default: op
+# Author Soryu-haruma(Asl,haruma9012kirby)
