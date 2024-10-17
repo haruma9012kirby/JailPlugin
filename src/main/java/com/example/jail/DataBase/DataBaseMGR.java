@@ -162,17 +162,16 @@ public class DataBaseMGR {
       }
    }
 
-   public void saveJailedPlayerToDatabase(String playerName, String jailName, long duration, long paroleUntil, boolean adventureMode) {
+   public void saveJailedPlayerToDatabase(String playerName, String jailName, long duration, boolean adventureMode) {
       long startTime = System.currentTimeMillis() / 1000L;
-      String query = "INSERT OR REPLACE INTO jailed_players (player, jail_name, start_time, duration, parole_until, adventure_mode) VALUES (?, ?, ?, ?, ?, ?)";
+      String query = "INSERT OR REPLACE INTO jailed_players (player, jail_name, start_time, duration, adventure_mode) VALUES (?, ?, ?, ?, ?)";
 
       try (PreparedStatement ps = this.connection.prepareStatement(query)) {
          ps.setString(1, playerName);
          ps.setString(2, jailName);
          ps.setLong(3, startTime);
          ps.setLong(4, duration);
-         ps.setLong(5, paroleUntil);
-         ps.setBoolean(6, adventureMode);
+         ps.setBoolean(5, adventureMode);
          ps.executeUpdate();
       } catch (SQLException e) {
          LOGGER.log(Level.SEVERE, "SQLエラーが発生しました: {0}", e.getMessage());

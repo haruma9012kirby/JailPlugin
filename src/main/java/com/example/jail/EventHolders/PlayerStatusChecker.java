@@ -23,12 +23,9 @@ public class PlayerStatusChecker {
       String playerName = player.getName();
       String jailName = this.plugin.getJailNameByPlayer.getJailNameByPlayer(playerName);
       if (jailName != null) {
-         long paroleUntil = this.plugin.dataBaseMGR.getParoleUntilFromDatabase(playerName);
-         if (paroleUntil > 0L && System.currentTimeMillis() / 1000L >= paroleUntil) {
-            Jail jail = this.plugin.getJails().get(jailName);
-            if (jail != null) {
-               unJailCommand.unjailPlayer(player, new String[]{playerName}); // プレイヤーを釈放
-            }
+         Jail jail = this.plugin.getJails().get(jailName);
+         if (jail != null) {
+            unJailCommand.unjailPlayer(player, new String[]{playerName}); // プレイヤーを釈放
          }
       }
    }

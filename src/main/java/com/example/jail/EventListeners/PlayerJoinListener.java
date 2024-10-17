@@ -1,6 +1,5 @@
 package com.example.jail.EventListeners;
 
-import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -32,45 +31,10 @@ public class PlayerJoinListener implements Listener {
         if (jailName != null) {
             Jail jail = plugin.getJails().get(jailName);
             if (jail != null) {
-                long paroleUntil = plugin.dataBaseMGR.getParoleUntilFromDatabase(player.getName());
-                long currentTime = System.currentTimeMillis() / 1000L;
-
-                // 釈放条件を満たしているか
-                if (paroleUntil > 0L && currentTime >= paroleUntil) {
-                    // プレイヤーを釈放
-                    unjailPlayer(player, jail);
-                } else {
-                    // プレイヤーを収監
-                    jailPlayer(player, jail);
-                }
+                // プレイヤーを収監
+                jailPlayer(player, jail);
             }
         }
-    }
-
-    // プレイヤーを釈放する処理
-    private void unjailPlayer(Player player, Jail jail) {
-        plugin.unJailCommand.unjailPlayer(Bukkit.getConsoleSender(), new String[]{player.getName()});
-        player.sendMessage(ChatColor.GREEN + "あなたは釈放されました。");
-
-        // ゲームモードをサバイバルに変更
-        player.setGameMode(GameMode.SURVIVAL);
-
-        // 釈放後のテレポート処理
-        Location unjailLocation = jail.getUnjailLocation();
-        if (unjailLocation != null) {
-            player.teleport(unjailLocation);
-            player.setRespawnLocation(unjailLocation, true);
-        }
-
-        // 経験値レベルアップの音を再生
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (player.isOnline()) {
-                    player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                }
-            }
-        }.runTaskLater(plugin, 6L);
     }
 
     // プレイヤーを収監する処理

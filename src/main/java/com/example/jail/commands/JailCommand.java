@@ -3,7 +3,6 @@ package com.example.jail.commands;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -56,30 +55,19 @@ public class JailCommand implements CommandExecutor {
          return false;
       }
 
-      long duration;
-      if (args.length >= 3 && "infiniti".equalsIgnoreCase(args[2])) {
-         duration = -1L; // 無期限を示す
-      } else {
-         duration = plugin.parseDuration.parseDuration(args.length >= 3 ? args[2] : null);
-      }
+      long duration = args.length >= 3 ? plugin.parseDuration.parseDuration(args[2]) : -1L;
       boolean adventureMode = args.length >= 4 && Boolean.parseBoolean(args[3]);
 
       Player target = Bukkit.getPlayer(playerName);
       if (target == null || !target.isOnline()) {
          // オフラインプレイヤーの場合
-         long paroleUntil = duration > 0L ? System.currentTimeMillis() / 1000L + duration : -1L;
-         plugin.dataBaseMGR.saveJailedPlayerToDatabase(playerName, jailName, duration, paroleUntil, adventureMode);
+         plugin.dataBaseMGR.saveJailedPlayerToDatabase(playerName, jailName, duration, adventureMode);
          player.sendMessage(ChatColor.YELLOW + playerName + " は現在オフラインです。次回オンライン時に収監されます。");
          return true;
       }
 
       jail.addPlayer(target.getName());
-      plugin.dataBaseMGR.saveJailedPlayerToDatabase(target.getName(), jailName, duration, -1L, adventureMode);
-
-      if (duration > 0L) {
-         long paroleUntil = System.currentTimeMillis() / 1000L + duration;
-         plugin.dataBaseMGR.updateParoleUntilInDatabase(target.getName(), paroleUntil);
-      }
+      plugin.dataBaseMGR.saveJailedPlayerToDatabase(target.getName(), jailName, duration, adventureMode);
 
       Location jailLocation = jail.getLocation();
       if (jailLocation == null) {
@@ -109,23 +97,17 @@ public class JailCommand implements CommandExecutor {
          target.sendMessage(ChatColor.RED + "あなたは " + formattedDuration + " の間、監獄に収監されました。");
          player.sendMessage(ChatColor.GREEN + target.getName() + " が " + jailName + " に " + formattedDuration + " の間、収監されました。");
       }
-
-      // アドベンチャーモードを有効にする
-      if (adventureMode) {
-         target.setGameMode(GameMode.ADVENTURE);
-      }
-
       return true;
    }
 
    // オフラインプレイヤーの収監データを保存
-   private void saveOfflineJailData(String playerName, String jailName, long duration, long paroleUntil, boolean adventureMode) {
-      plugin.dataBaseMGR.saveJailedPlayerToDatabase(playerName, jailName, duration, paroleUntil, adventureMode);
+   private void saveOfflineJailData(String playerName, String jailName, long duration, boolean adventureMode) {
+      plugin.dataBaseMGR.saveJailedPlayerToDatabase(playerName, jailName, duration, adventureMode);
    }
 
    // オフラインプレイヤーを収監
    public void jailOfflinePlayer(CommandSender sender, String playerName, String jailName) {
-      plugin.dataBaseMGR.saveJailedPlayerToDatabase(playerName, jailName, -1L, -1L, false);
+      plugin.dataBaseMGR.saveJailedPlayerToDatabase(playerName, jailName, -1L, false);
       sender.sendMessage(ChatColor.YELLOW + playerName + " は次回参加時に収監されます。");
    }
 
@@ -144,7 +126,7 @@ public class JailCommand implements CommandExecutor {
       Player target = Bukkit.getPlayer(playerName);
 
       if (target == null || !target.isOnline()) {
-         saveOfflineJailData(playerName, jailName, duration, -1L, adventureMode);
+         saveOfflineJailData(playerName, jailName, duration, adventureMode);
          sender.sendMessage(ChatColor.YELLOW + playerName + " は現在オフラインです。次回オンライン時に収監されます。");
          return true;
       }
