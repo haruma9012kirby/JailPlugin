@@ -3,6 +3,7 @@ package com.example.jail.commands;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -18,24 +19,26 @@ import net.md_5.bungee.api.ChatColor;
 public class JailCommand implements CommandExecutor {
    private final JailPlugin plugin;
    private final Map<String, Jail> jails;
+   private static final long INFINITY_DURATION = -1L; // 無期限の期間を定義
 
    public JailCommand(JailPlugin plugin) {
       this.plugin = plugin;
       this.jails = plugin.getJails();
    }
 
+   // コマンドの実行
    @Override
    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-      if (sender instanceof Player) {
+      if (sender instanceof Player) { // コマンドを実行したプレイヤーが存在するか
          Player player = (Player) sender;
-         return handleJailCommand(player, args);
+         return handleJailCommand(player, args); // プレイヤーの収監
       }
       return false;
    }
 
    // プレイヤーの収監
    public boolean handleJailCommand(Player player, String[] args) {
-      if (args.length < 2) {
+      if (args.length < 2) { // コマンドの引数が2つ未満の場合
          player.sendMessage(ChatColor.RED + "使用法:");
          player.sendMessage(ChatColor.YELLOW + "- /jail <プレイヤー> <刑務所> [期間] [アドベンチャーモード(true/false)]");
          return false;
@@ -43,34 +46,38 @@ public class JailCommand implements CommandExecutor {
 
       String playerName = args[0];
       String jailName = args[1];
-      Jail jail = this.jails.get(jailName);
+      Jail jail = this.jails.get(jailName); // 刑務所を取得
       
-      if (jail == null) {
+      if (jail == null) { // 刑務所がnullの場合
          player.sendMessage(ChatColor.RED + "刑務所が見つかりません");
          return false;
       }
 
-      if (jail.isFull()) {
+      if (jail.isFull()) { // 刑務所が満員の場合
          player.sendMessage(ChatColor.RED + "刑務所が満員です。");
          return false;
       }
 
-      long duration = args.length >= 3 ? plugin.parseDuration.parseDuration(args[2]) : -1L;
-      boolean adventureMode = args.length >= 4 && Boolean.parseBoolean(args[3]);
+      long duration;
+      if (args.length >= 3 && args[2].equalsIgnoreCase("infinity")) { // 刑期が無期の場合
+         duration = INFINITY_DURATION;
+      } else {
+         duration = args.length >= 3 ? plugin.parseDuration.parseDuration(args[2]) : INFINITY_DURATION; // 刑期を解析
+      }
+      
+      boolean adventureMode = args.length >= 4 && Boolean.parseBoolean(args[3]); // アドベンチャーモードの有無
 
       Player target = Bukkit.getPlayer(playerName);
-      if (target == null || !target.isOnline()) {
-         // オフラインプレイヤーの場合
-         plugin.dataBaseMGR.saveJailedPlayerToDatabase(playerName, jailName, duration, adventureMode);
-         player.sendMessage(ChatColor.YELLOW + playerName + " は現在オフラインです。次回オンライン時に収監されます。");
-         return true;
+      if (target == null || !target.isOnline()) { // プレイヤーがオフラインの場合
+         player.sendMessage(ChatColor.RED + playerName + " は現在オフラインです。");
+         return false;
       }
 
-      jail.addPlayer(target.getName());
-      plugin.dataBaseMGR.saveJailedPlayerToDatabase(target.getName(), jailName, duration, adventureMode);
+      jail.addPlayer(target.getName()); // プレイヤーを刑務所に収監
+      plugin.dataBaseMGR.saveJailedPlayerToDatabase(target.getName(), jailName, duration, adventureMode); // プレイヤーをデータベースに保存
 
-      Location jailLocation = jail.getLocation();
-      if (jailLocation == null) {
+      Location jailLocation = jail.getLocation(); // 刑務所の位置を取得
+      if (jailLocation == null) { // 刑務所の位置がnullの場合
          player.sendMessage(ChatColor.RED + "エラー: 刑務所の位置が設定されていません。");
          return false;
       }
@@ -81,63 +88,52 @@ public class JailCommand implements CommandExecutor {
       // プレイヤーの位置を取得
       Location targetLocation = target.getLocation();
       // プレイヤーの位置が取得できた場合、金床の使用音を再生
-      if (targetLocation != null) {
-         Bukkit.getScheduler().runTaskLater(plugin, () -> {
+      if (adventureMode) {
+         target.setGameMode(GameMode.ADVENTURE);
+      }
+      if (targetLocation != null) { // プレイヤーの位置が取得できた場合
+         Bukkit.getScheduler().runTaskLater(plugin, () -> { // 金床の使用音を再生
             target.playSound(targetLocation, Sound.BLOCK_ANVIL_USE, 1.0F, 1.0F);
          }, 6L);
-      } else {
+      } else { // プレイヤーの位置が取得できなかった場合
          player.sendMessage(ChatColor.RED + "エラー: プレイヤーの位置を取得できませんでした。");
       }
       // 刑期が無期の場合
-      if (duration == -1L) {
+      if (duration == INFINITY_DURATION) {
          target.sendMessage(ChatColor.RED + "あなたは無期懲役で監獄に収監されました。");
          player.sendMessage(ChatColor.GREEN + target.getName() + " が " + jailName + " に無期懲役で収監されました。");
-      } else {
+      } else { // 刑期が無期でない場合
          String formattedDuration = plugin.formatDuration.formatDuration(duration);
          target.sendMessage(ChatColor.RED + "あなたは " + formattedDuration + " の間、監獄に収監されました。");
          player.sendMessage(ChatColor.GREEN + target.getName() + " が " + jailName + " に " + formattedDuration + " の間、収監されました。");
       }
-      return true;
-   }
-
-   // オフラインプレイヤーの収監データを保存
-   private void saveOfflineJailData(String playerName, String jailName, long duration, boolean adventureMode) {
-      plugin.dataBaseMGR.saveJailedPlayerToDatabase(playerName, jailName, duration, adventureMode);
-   }
-
-   // オフラインプレイヤーを収監
-   public void jailOfflinePlayer(CommandSender sender, String playerName, String jailName) {
-      plugin.dataBaseMGR.saveJailedPlayerToDatabase(playerName, jailName, -1L, false);
-      sender.sendMessage(ChatColor.YELLOW + playerName + " は次回参加時に収監されます。");
+      return true; // プレイヤーの収監が成功した場合
    }
 
    // プレイヤーを収監
    public boolean jailPlayer(CommandSender sender, String[] args) {
-      if (args.length < 2) {
+      if (args.length < 2) { // コマンドの引数が2つ未満の場合
          sender.sendMessage(ChatColor.RED + "使用法: /jail <プレイヤー名> <監獄名> [期間] [アドベンチャーモード(true/false)]");
          return false;
       }
       
       String playerName = args[0];
       String jailName = args[1];
-      long duration = args.length >= 3 ? plugin.parseDuration.parseDuration(args[2]) : -1L;
-      boolean adventureMode = args.length >= 4 && Boolean.parseBoolean(args[3]);
 
       Player target = Bukkit.getPlayer(playerName);
 
-      if (target == null || !target.isOnline()) {
-         saveOfflineJailData(playerName, jailName, duration, adventureMode);
-         sender.sendMessage(ChatColor.YELLOW + playerName + " は現在オフラインです。次回オンライン時に収監されます。");
-         return true;
+      if (target == null || !target.isOnline()) { // プレイヤーがオフラインの場合
+         sender.sendMessage(ChatColor.RED + playerName + " は現在オフラインです。");
+         return false;
       }
 
       // オンラインプレイヤーの収監処理
-      Jail jail = plugin.getJails().get(jailName);
-      if (jail == null) {
+      Jail jail = plugin.getJails().get(jailName); // 刑務所を取得
+      if (jail == null) { // 刑務所がnullの場合
          sender.sendMessage(ChatColor.RED + "指定された監獄が見つかりません。");
          return false;
       }
       // 収監処理を実行
-      return handleJailCommand((Player) sender, args);
+      return handleJailCommand((Player) sender, args); // プレイヤーの収監
    }
 }

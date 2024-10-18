@@ -23,31 +23,31 @@ public class SetUnJailCommand {
             return false;
         }
 
-        String jailName = args[0];
+        String jailName = args[0]; // 刑務所名を取得
         if (this.plugin.jails == null) {
             player.sendMessage(ChatColor.RED + "刑務所リストが初期化されていません。");
             return false;
         }
 
-        Jail jail = this.plugin.jails.get(jailName);
+        Jail jail = this.plugin.jails.get(jailName); // 刑務所を取得
         if (jail == null) {
             player.sendMessage(ChatColor.RED + "刑務所が見つかりません。");
             return false;
         }
 
-        Location location = player.getLocation();
+        Location location = player.getLocation(); // プレイヤーの位置を取得
         jail.setUnjailLocation(location);
 
-        player.sendMessage(ChatColor.GREEN + "あなたは釈放されました。"); 
+        player.sendMessage(ChatColor.GREEN + "あなたは釈放されました。"); // 釈放メッセージを送信
 
         if (this.plugin.dataBaseMGR != null) {
             this.plugin.dataBaseMGR.updateUnjailLocationInDatabase(jailName, location); // 釈放地点をデータベースに更新
         } else {
-            player.sendMessage(ChatColor.RED + "データベースマネージャーが初期化されていません。");
+            player.sendMessage(ChatColor.RED + "データベースマネージャーが初期化されていません。"); // データベースマネージャーが初期化されていない場合はエラーメッセージを送信
             return false;
         }
 
-        player.sendMessage(ChatColor.GREEN + jailName + " の釈放地点が設定されました。");
+        player.sendMessage(ChatColor.GREEN + jailName + " の釈放地点が設定されました。"); // 釈放地点が設定されたメッセージを送信
         
         return true;
     }

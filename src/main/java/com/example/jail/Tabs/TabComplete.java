@@ -29,24 +29,25 @@ public class TabComplete implements TabCompleter {
 
         switch (commandName) {
             case "jail":
-                return completeJailCommand(args);
+                return completeJailCommand(args); // jailコマンドのタブ補完
             case "unjail":
-                return completeUnjailCommand(args);
+                return completeUnjailCommand(args); // unjailコマンドのタブ補完
             case "setunjail":
-                return completeSetUnjailCommand(args);
+                return completeSetUnjailCommand(args); // setunjailコマンドのタブ補完
             case "jailtp":
-                return completeJailTpCommand(args);
+                return completeJailTpCommand(args); // jailtpコマンドのタブ補完
             case "jailtp-rp":
-                return completeJailTpRpCommand(args);
+                return completeJailTpRpCommand(args); // jailtp-rpコマンドのタブ補完
             case "removejail":
-                return completeJailNameCommand(args);
+                return completeJailNameCommand(args); // removejailコマンドのタブ補完
             case "jailinfo":
-                return completeJailInfoCommand(args);
+                return completeJailInfoCommand(args); // jailinfoコマンドのタブ補完
             default:
                 return null;
         }
     }
 
+    // 全プレイヤー名を取得
     private List<String> getAllPlayerNames() {
         List<String> onlinePlayers = getOnlinePlayerNames();
         List<String> allPlayers = new ArrayList<>(onlinePlayers);
@@ -59,6 +60,7 @@ public class TabComplete implements TabCompleter {
         return allPlayers;
     }
 
+    // jailコマンドのタブ補完
     private List<String> completeJailCommand(String[] args) {
         switch (args.length) {
             case 1:
@@ -68,7 +70,7 @@ public class TabComplete implements TabCompleter {
             case 2:
                 return filterByPrefix(new ArrayList<>(this.jails.keySet()), args[1]); // 監獄名を補完
             case 3:
-                return filterByPrefix(Arrays.asList("infiniti", "1w", "1d", "1h", "1m", "1s"), args[2]); // 期間を補完
+                return filterByPrefix(Arrays.asList("infinity", "1w", "1d", "1h", "1m", "1s"), args[2]); // 期間を補完
             case 4:
                 return filterByPrefix(Arrays.asList("true", "false"), args[3]); // アドベンチャーモードの真偽値を補完
             default:
@@ -76,12 +78,14 @@ public class TabComplete implements TabCompleter {
         }
     }
     
+    // オンラインプレイヤー名を取得
     private List<String> getOnlinePlayerNames() {
         return Bukkit.getOnlinePlayers().stream()
                 .map(Player::getName)
                 .collect(Collectors.toList()); // オンラインプレイヤー名を取得
     }
     
+    // プレイヤー名を補完
     private List<String> filterByPrefix(List<String> options, String prefix) {
         if (prefix == null || prefix.isEmpty()) {
             return options;
@@ -91,6 +95,7 @@ public class TabComplete implements TabCompleter {
                 .collect(Collectors.toList());
     }
 
+    // jailtpコマンドのタブ補完
     private List<String> completeJailTpCommand(String[] args) {
         switch (args.length) {
             case 1:
@@ -100,6 +105,7 @@ public class TabComplete implements TabCompleter {
         }
     }
 
+    // jailtp-rpコマンドのタブ補完
     private List<String> completeJailTpRpCommand(String[] args) {
         switch (args.length) {
             case 1:
@@ -109,6 +115,7 @@ public class TabComplete implements TabCompleter {
         }
     }
 
+    // jailinfoコマンドのタブ補完
     private List<String> completeJailInfoCommand(String[] args) {
         switch (args.length) {
             case 1:
@@ -118,6 +125,7 @@ public class TabComplete implements TabCompleter {
         }
     }
 
+    // unjailコマンドのタブ補完
     private List<String> completeUnjailCommand(String[] args) {
         switch (args.length) {
             case 1:
@@ -127,6 +135,7 @@ public class TabComplete implements TabCompleter {
         }
     }
 
+    // setunjailコマンドのタブ補完
     private List<String> completeSetUnjailCommand(String[] args) {
         switch (args.length) {
             case 1:
@@ -136,6 +145,7 @@ public class TabComplete implements TabCompleter {
         }
     }
 
+    // removejailコマンドのタブ補完
     private List<String> completeJailNameCommand(String[] args) {
         if (args.length == 1) {
             return filterByPrefix(getAllPlayerNames(), args[0]); // プレイヤー名を補完

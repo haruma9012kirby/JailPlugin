@@ -8,31 +8,22 @@ url: https://github.com/haruma9012kirby/JailPlugin
 commands:
   setjail:
     description: Sets a location as a jail.
-    tab-complete: com.example.jail.Tabs.TabComplete
   jail:
     description: Jail a player.
-    tab-complete: com.example.jail.Tabs.TabComplete
   setunjail:
     description: Set an unjail location.
-    tab-complete: com.example.jail.Tabs.TabComplete
   jaillist:
     description: List all jails and jailed players.
-    tab-complete: com.example.jail.Tabs.TabComplete
   unjail:
     description: Unjail a player.
-    tab-complete: com.example.jail.Tabs.TabComplete
   jailtp:
     description: Teleport to a jail.
-    tab-complete: com.example.jail.Tabs.TabComplete
   jailtp-rp:
     description: Teleport to a jail's release point.
-    tab-complete: com.example.jail.Tabs.TabComplete
   removejail:
     description: Remove a jail.
-    tab-complete: com.example.jail.Tabs.TabComplete
   jailinfo:
     description: Show information about a specific jail.
-    tab-complete: com.example.jail.Tabs.TabComplete
 permissions:
   jailplugin.command.setjail:
     description: Allows the user to set a jail location.
@@ -61,4 +52,3 @@ permissions:
   jailplugin.command.jailinfo:
     description: Allows the user to show information about a specific jail.
     default: op
-# Author Soryu-haruma(Asl,haruma9012kirby)
