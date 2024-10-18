@@ -35,10 +35,10 @@
 
 ## 作者
 
-Soryu-haruma (Als, haruma9012kirby)
+Soryu-haruma (Asl, haruma9012kirby)
 
 ## サポート
 
 問題や提案がある場合は、GitHub の Issue トラッカーを使用してください。
 
-`Copyright (c) 2024 Soryu-haruma (Als, haruma9012kirby)`
+`Copyright (c) 2024 Soryu-haruma (Asl, haruma9012kirby)`
