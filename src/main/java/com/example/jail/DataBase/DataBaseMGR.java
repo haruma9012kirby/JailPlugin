@@ -17,7 +17,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.example.jail.Jail;
 import com.example.jail.JailPlugin;
-
 // データベース管理
 public class DataBaseMGR {
    private static final Logger LOGGER = Logger.getLogger(DataBaseMGR.class.getName()); // ログを出力
@@ -30,8 +29,9 @@ public class DataBaseMGR {
    private Connection connection; // データベース接続
    private final Map<String, Jail> jails; // 刑務所
    private final Map<Jail, Map<String, Long>> jailedPlayers; // 刑務所の収容プレイヤー
+   private final JailPlugin plugin; // JailPluginのインスタンスを保持
    // データベース管理
-   public DataBaseMGR(boolean mysqlEnabled, String mysqlHost, int mysqlPort, String mysqlDatabase, String mysqlUsername, String mysqlPassword) {
+   public DataBaseMGR(boolean mysqlEnabled, String mysqlHost, int mysqlPort, String mysqlDatabase, String mysqlUsername, String mysqlPassword, JailPlugin plugin) {
       this.mysqlEnabled = mysqlEnabled; // MySQLが有効か
       this.mysqlHost = mysqlHost; // MySQLのホスト
       this.mysqlPort = mysqlPort; // MySQLのポート
@@ -40,6 +40,7 @@ public class DataBaseMGR {
       this.mysqlPassword = mysqlPassword; // MySQLのパスワード
       this.jails = new HashMap<>(); // 刑務所
       this.jailedPlayers = new HashMap<>(); // 刑務所の収容プレイヤー
+      this.plugin = plugin; // プラグインを初期化
    }
 
    public void initialize() {
@@ -65,7 +66,7 @@ public class DataBaseMGR {
          initializeSQLite(); // SQLiteを初期化
       }
    }
-
+   // オフラインプレイヤーの次回参加時の収監処理
    private void initializeSQLite() {
       try {
          String url = "jdbc:sqlite:plugins/JailPlugin/jails.db"; // SQLiteのurl
@@ -315,6 +316,31 @@ public class DataBaseMGR {
          LOGGER.log(Level.SEVERE, "エラー詳細: ", e); // ログを出力
       }
       return startTime; // 開始時間を取得
+   }
+
+   // アドベンチャーモードを取得
+   public boolean getAdventureMode(String playerName) {
+       boolean adventureMode = false; // デフォルトはfalse
+       String query = "SELECT adventure_mode FROM jailed_players WHERE player = ?"; // アドベンチャーモードを取得
+
+       try (PreparedStatement ps = this.connection.prepareStatement(query)) { // データベース接続を作成
+           ps.setString(1, playerName); // プレイヤー名を設定
+           try (ResultSet rs = ps.executeQuery()) { // データベース接続を作成
+               if (rs.next()) { // アドベンチャーモードを取得
+                   adventureMode = rs.getBoolean("adventure_mode"); // アドベンチャーモードを取得
+               }
+           }
+       } catch (SQLException e) { // SQLエラーが発生した場合
+           LOGGER.log(Level.SEVERE, "SQLエラーが発生しました: {0}", e.getMessage()); // ログを出力
+           LOGGER.log(Level.SEVERE, "エラー詳細: ", e); // ログを出力
+       }
+
+       return adventureMode;
+   }
+   // オフラインプレイヤーの次回参加時の収監処理
+   public void offlinePlayerNextJoin(String playerName, String jailName, long duration, boolean adventureMode) {
+      saveJailedPlayerToDatabase(playerName, jailName, duration, adventureMode); // プレイヤーをデータベースに保存
+      jails.get(jailName).addPlayer(playerName); // プレイヤーを刑務所に収監
    }
 
 }

@@ -75,7 +75,7 @@ public class JailPlugin extends JavaPlugin implements Listener {
       String mysqlUsername = getConfig().getString("mysql.username"); // MySQLのユーザー名
       String mysqlPassword = getConfig().getString("mysql.password"); // MySQLのパスワード
       
-      dataBaseMGR = new DataBaseMGR(mysqlEnabled, mysqlHost, mysqlPort, mysqlDatabase, mysqlUsername, mysqlPassword); // DataBaseMGRのインスタンスを作成
+      dataBaseMGR = new DataBaseMGR(mysqlEnabled, mysqlHost, mysqlPort, mysqlDatabase, mysqlUsername, mysqlPassword, this); // DataBaseMGRのインスタンスを作成
       dataBaseMGR.initialize(); // データベースを初期化
       dataBaseMGR.createTables(); // テーブルを作成
 
